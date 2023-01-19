@@ -1,0 +1,96 @@
+REPORT ypg_test04.
+
+DATA:
+  lv_aufnr  TYPE aufnr,
+  lv_aufart TYPE aufart
+  .
+
+SELECT-OPTIONS:
+  s_aufnr       FOR lv_aufnr,
+  s_aufart      FOR lv_aufart
+  .
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR s_aufnr-low.
+
+  PERFORM aufnr_f4 CHANGING s_aufnr-low.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR s_aufnr-high.
+
+  PERFORM aufnr_f4 CHANGING s_aufnr-high.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR s_aufart-low.
+
+  PERFORM aufart_f4 CHANGING s_aufart-low.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR s_aufart-high.
+
+  PERFORM aufart_f4 CHANGING s_aufart-high.
+
+FORM aufnr_f4
+  CHANGING
+    cv_aufnr TYPE aufnr.
+
+  DATA:
+    lv_value  TYPE help_info-fldvalue,
+    lt_return TYPE STANDARD TABLE OF ddshretval
+    .
+
+  CALL FUNCTION 'F4IF_FIELD_VALUE_REQUEST'
+    EXPORTING
+      tabname           = '<any>'     " Table/structure name from Dictionary
+      fieldname         = '<any>'     " Field name from Dictionary
+      searchhelp        = 'ORDE'      " Search help as screen field attribute
+      value             = lv_value    " Field contents for F4 call
+    TABLES
+      return_tab        = lt_return   " Return the selected value
+    EXCEPTIONS
+      field_not_found   = 1           " Field does not exist in the Dictionary
+      no_help_for_field = 2           " No F4 help is defined for the field
+      inconsistent_help = 3           " F4 help for the field is inconsistent
+      no_values_found   = 4           " No values found
+      OTHERS            = 5.
+  IF sy-subrc NE 0.
+    RETURN.
+  ENDIF.
+  READ TABLE lt_return INTO DATA(ls_ret) INDEX 1.
+  cv_aufnr = ls_ret-fieldval.
+
+ENDFORM.
+
+FORM aufart_f4
+  CHANGING
+    cv_aufart TYPE aufart.
+
+  DATA:
+    lt_values TYPE STANDARD TABLE OF t003o,
+    lt_return TYPE STANDARD TABLE OF ddshretval
+    .
+
+  SELECT *                                              "#EC CI_NOWHERE
+    FROM t003o
+    INTO TABLE lt_values.
+
+  IF sy-subrc NE 0.
+    RETURN.
+  ENDIF.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'AUART'    " Name of field in VALUE_TAB
+      value_org       = 'S'        " Value return: C: cell by cell, S: structured
+    TABLES
+      value_tab       = lt_values  " Table of values: entries cell by cell
+      return_tab      = lt_return  " Return the selected value
+    EXCEPTIONS
+      parameter_error = 1          " Incorrect parameter
+      no_values_found = 2          " No values found
+      OTHERS          = 3.
+
+  IF sy-subrc NE 0.
+    RETURN.
+  ENDIF.
+
+  READ TABLE lt_return INTO DATA(ls_return) INDEX 1.
+  cv_aufart = ls_return-fieldval.
+
+ENDFORM.

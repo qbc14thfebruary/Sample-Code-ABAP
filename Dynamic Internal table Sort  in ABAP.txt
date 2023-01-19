@@ -1,0 +1,15 @@
+REPORT ypg_test01 NO STANDARD PAGE HEADING.
+
+TABLES: sflight.
+
+DATA: lv_sort  TYPE c LENGTH 30 VALUE 'CARRID CONNID',
+      lv_sort1 TYPE c LENGTH 30 VALUE 'CARRID',
+      lv_sort2 TYPE c LENGTH 30 VALUE 'CONNID'.
+
+SELECT * FROM sflight INTO TABLE @DATA(lt_data).
+
+*SORT lt_data BY (lv_sort1) (lv_sort2).  " Đúng
+SORT lt_data BY (lv_sort).               " Sai do trong It [lt_data] không có component [CARRID CONNID]
+
+BREAK-POINT.
+cl_demo_output=>display( lt_data ).

@@ -1,0 +1,33 @@
+REPORT ypg_test02.
+
+DATA : w_l_struc         TYPE REF TO cl_abap_structdescr,
+       tbl_l_fields      TYPE ddfields,
+       lv_structure_name TYPE string VALUE 'SFLIGHT'.
+
+DATA : lt_fieldcat TYPE slis_t_fieldcat_alv,
+       ls_fieldcat LIKE LINE OF lt_fieldcat.
+
+CLEAR: ls_fieldcat,
+       w_l_struc.
+FREE : lt_fieldcat,
+       tbl_l_fields.
+
+w_l_struc ?= cl_abap_structdescr=>describe_by_name( p_name = lv_structure_name ).
+tbl_l_fields = w_l_struc->get_ddic_field_list( ).
+
+
+LOOP AT tbl_l_fields ASSIGNING FIELD-SYMBOL(<fs_fields>).
+  ls_fieldcat-fieldname = <fs_fields>-fieldname.
+  ls_fieldcat-seltext_l = <fs_fields>-scrtext_l.
+  ls_fieldcat-col_pos   = sy-tabix.
+  IF ls_fieldcat-fieldname = 'CARRID' OR
+     ls_fieldcat-fieldname = 'CONNID' OR
+     ls_fieldcat-fieldname = 'FLDATE' .
+    ls_fieldcat-key = abap_on.
+  ENDIF.
+  APPEND ls_fieldcat TO lt_fieldcat.
+  CLEAR: ls_fieldcat.
+ENDLOOP.
+
+cl_demo_output=>display( lt_fieldcat ).
+BREAK-POINT .

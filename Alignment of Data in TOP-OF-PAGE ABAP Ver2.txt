@@ -1,0 +1,117 @@
+*&---------------------------------------------------------------------*
+*& Report YPG_ALIGHMENT_ALV
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ypg_alighment_alv.
+
+TABLES: sflight.
+DATA: lt TYPE TABLE OF sflight.
+
+SELECT * FROM sflight INTO TABLE lt.
+
+CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+  EXPORTING
+    i_callback_program          = sy-repid                  " Name of the calling program
+*   i_callback_pf_status_set    = space                     " Set EXIT routine to status
+*   i_callback_user_command     = space                     " EXIT routine for command handling
+*   i_callback_top_of_page      = space                     " EXIT routine for handling TOP-OF-PAGE
+    i_callback_html_top_of_page = 'TOP_PAGE_SECTION_CONTROL'            " EXIT routine for HTML TOP-OF-PAGE
+*   i_callback_html_end_of_list = space                     " EXIT routine for HTML END-OF-LIST
+    i_structure_name            = 'SFLIGHT'                 " Internal output table structure name
+  TABLES
+    t_outtab                    = lt                        " Table with data to be displayed
+  EXCEPTIONS
+    program_error               = 1                         " Program errors
+    OTHERS                      = 2.
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+    WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ENDIF.
+
+FORM top_page_section_control USING o_dd_document TYPE REF TO cl_dd_document.
+  DATA: o_dd_left   TYPE REF TO cl_dd_area,
+        o_dd_middle TYPE REF TO cl_dd_area,
+        o_dd_right  TYPE REF TO cl_dd_area.
+
+*  Alghn right.
+  CALL METHOD o_dd_document->vertical_split
+    EXPORTING
+      split_area               = o_dd_document              " After Split: Area on Left-Hand Side
+      split_width              = '80%'                      " Width of Left-Hand Area (Example '40%')
+    IMPORTING
+      right_area               = o_dd_right                 " Area on Right-Hand Side (Recreated)
+    EXCEPTIONS
+      invalid_split_area       = 1                          " SPLIT_AREA is Not a Valid Area (Does Not Exist in Doc.)
+      split_area_eq_right_area = 2                          " SPLIT_AREA is the same as RIGHT_AREA
+      right_area_already_used  = 3                          " Reference Variable for RIGHT_AREA has Already Been Used
+      OTHERS                   = 4.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+      WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  CALL METHOD o_dd_right->add_text
+    EXPORTING
+      text = 'This is right most line'.                     " Single Text, Up To 255 Characters Long.
+
+
+*  Alghn center.
+  CALL METHOD o_dd_document->vertical_split
+    EXPORTING
+      split_area               = o_dd_document              " After Split: Area on Left-Hand Side
+      split_width              = '50%'                      " Width of Left-Hand Area (Example '40%')
+    IMPORTING
+      right_area               = o_dd_middle                " Area on Right-Hand Side (Recreated)
+    EXCEPTIONS
+      invalid_split_area       = 1                          " SPLIT_AREA is Not a Valid Area (Does Not Exist in Doc.)
+      split_area_eq_right_area = 2                          " SPLIT_AREA is the same as RIGHT_AREA
+      right_area_already_used  = 3                          " Reference Variable for RIGHT_AREA has Already Been Used
+      OTHERS                   = 4.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+      WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  CALL METHOD o_dd_middle->add_text
+    EXPORTING
+      text = 'This is Center most line'.                    " Single Text, Up To 255 Characters Long.
+
+*  Alghn left.
+  CALL METHOD o_dd_document->vertical_split
+    EXPORTING
+      split_area               = o_dd_document              " After Split: Area on Left-Hand Side
+      split_width              = '0%'                       " Width of Left-Hand Area (Example '40%')
+    IMPORTING
+      right_area               = o_dd_left                  " Area on Right-Hand Side (Recreated)
+    EXCEPTIONS
+      invalid_split_area       = 1                          " SPLIT_AREA is Not a Valid Area (Does Not Exist in Doc.)
+      split_area_eq_right_area = 2                          " SPLIT_AREA is the same as RIGHT_AREA
+      right_area_already_used  = 3                          " Reference Variable for RIGHT_AREA has Already Been Used
+      OTHERS                   = 4.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+      WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  DATA: lt_txt TYPE sdydo_text_table,
+        ls_txt LIKE LINE OF lt_txt.
+
+  ls_txt = 'This is left most line'.
+  APPEND ls_txt TO lt_txt. CLEAR: ls_txt.
+
+  CONCATENATE 'Date:' sy-datum INTO ls_txt SEPARATED BY space.
+  APPEND ls_txt TO lt_txt. CLEAR: ls_txt.
+
+  CONCATENATE 'Time:' sy-uzeit INTO ls_txt SEPARATED BY space.
+  APPEND ls_txt TO lt_txt. CLEAR: ls_txt.
+
+  CONCATENATE 'Date:' sy-uname INTO ls_txt SEPARATED BY space.
+  APPEND ls_txt TO lt_txt. CLEAR: ls_txt.
+
+  CALL METHOD o_dd_left->add_text
+    EXPORTING
+      text_table   = lt_txt
+      sap_emphasis = 'strong'
+      fix_lines    = 'X'.
+ENDFORM.

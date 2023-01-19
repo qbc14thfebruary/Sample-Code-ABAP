@@ -1,0 +1,76 @@
+REPORT ypg_upload_to_sever.
+
+TABLES: sflight.
+
+START-OF-SELECTION.
+
+  DATA: tbl_data          TYPE TABLE OF sflight,
+        tbl_upload        TYPE STANDARD TABLE OF char16384,
+        tbl_l_fields      TYPE ddfields,
+        w_l_filepath      TYPE string,
+        w_l_struc         TYPE REF TO cl_abap_structdescr,
+        w_l_fname         TYPE string,
+        w_l_ftext         TYPE string,
+        lv_structure_name TYPE string VALUE 'SFLIGHT'.
+
+  CLEAR: w_l_struc.
+  FREE : tbl_l_fields.
+
+  w_l_struc ?= cl_abap_structdescr=>describe_by_name( p_name = lv_structure_name ).
+  tbl_l_fields = w_l_struc->get_ddic_field_list( ).
+
+
+  w_l_filepath = 'C:\usr\sap\GVP\SYS\src\test.csv'.
+  SELECT * FROM sflight INTO CORRESPONDING FIELDS OF TABLE tbl_data.
+
+  DATA(lo_csv) = cl_rsda_csv_converter=>create(
+                 i_delimiter      = cl_rsda_csv_converter=>c_default_delimiter
+                 i_separator      = cl_rsda_csv_converter=>c_default_separator
+               ).
+
+  LOOP AT tbl_data ASSIGNING FIELD-SYMBOL(<fs_data>).
+    APPEND INITIAL LINE TO tbl_upload ASSIGNING FIELD-SYMBOL(<fs_upload>).
+
+    lo_csv->structure_to_csv(
+      EXPORTING
+        i_s_data =    <fs_data>              " I_S_DATA
+      IMPORTING
+        e_data   =    <fs_upload>            " E_DATA
+    ).
+  ENDLOOP.
+
+
+*  Mở đường dẫn trên Sever của SAP để lưu trữ file
+  OPEN DATASET w_l_filepath FOR OUTPUT IN TEXT MODE ENCODING DEFAULT.
+
+  LOOP AT tbl_l_fields ASSIGNING FIELD-SYMBOL(<fs_fields>).
+*    Dòng đầu tiên ghi tên miêu tả của fieldName
+    IF w_l_ftext IS  INITIAL.
+      CONCATENATE w_l_ftext <fs_fields>-fieldtext INTO w_l_ftext.
+    ELSE.
+      CONCATENATE w_l_ftext <fs_fields>-fieldtext INTO w_l_ftext SEPARATED BY cl_rsda_csv_converter=>c_default_separator.
+    ENDIF.
+
+*    Dòng thứ hai ghi tên miêu tả của text fieldName
+    IF w_l_fname IS  INITIAL.
+      CONCATENATE w_l_fname <fs_fields>-fieldname INTO w_l_fname.
+    ELSE.
+      CONCATENATE w_l_fname <fs_fields>-fieldname INTO w_l_fname SEPARATED BY cl_rsda_csv_converter=>c_default_separator.
+    ENDIF.
+  ENDLOOP.
+
+  TRANSFER w_l_ftext TO w_l_filepath.
+  TRANSFER w_l_fname TO w_l_filepath.
+
+  CLEAR:   w_l_fname,
+           w_l_ftext.
+
+
+  LOOP AT tbl_upload ASSIGNING <fs_upload>.
+
+    TRANSFER <fs_upload> TO w_l_filepath.
+
+  ENDLOOP.
+
+*  Đóng đường dẫn trên Sever của SAP để lưu trữ file
+  CLOSE DATASET w_l_filepath.

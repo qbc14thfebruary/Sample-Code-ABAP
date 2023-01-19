@@ -1,0 +1,213 @@
+REPORT ypg_test02.
+
+TABLES:     t001.
+TYPE-POOLS: slis.
+
+TYPES : BEGIN OF ty_comp.
+          INCLUDE STRUCTURE t001.
+        TYPES : END OF ty_comp.
+
+DATA : w_repid     LIKE sy-repid,
+       wa_layout   TYPE slis_layout_alv,
+       it_fieldcat TYPE slis_t_fieldcat_alv,
+       wa_fieldcat TYPE slis_fieldcat_alv,
+       it_comp     TYPE TABLE OF ty_comp.
+
+INITIALIZATION.
+  w_repid = sy-repid.
+
+START-OF-SELECTION.
+  SELECT * FROM t001 INTO TABLE it_comp.
+
+END-OF-SELECTION.
+
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_program_name         = w_repid
+      i_internal_tabname     = 'IT_COMP'
+      i_structure_name       = 'T001'
+      i_inclname             = w_repid
+    CHANGING
+      ct_fieldcat            = it_fieldcat[]
+    EXCEPTIONS
+      inconsistent_interface = 1
+      program_error          = 2
+      OTHERS                 = 3.
+
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+    EXPORTING
+      i_callback_program          = w_repid
+      i_callback_html_top_of_page = 'HTML_TOP_OF_PAGE'
+      is_layout                   = wa_layout
+      it_fieldcat                 = it_fieldcat
+    TABLES
+      t_outtab                    = it_comp
+    EXCEPTIONS
+      program_error               = 1
+      OTHERS                      = 2.
+
+
+*&———————————————————————**&      FORM  html_top_of_page*&———————————————————————*
+
+FORM html_top_of_page USING document TYPE REF TO cl_dd_document.
+  DATA: text TYPE sdydo_text_element.
+
+**  CALL METHOD document->add_gap EXPORTING width = '50%'.
+**
+  text =  'Company Code Data'.
+**
+**  CALL METHOD document->add_text
+**    EXPORTING
+**      text      = text
+**      sap_style = 'Heading'.
+
+  CALL METHOD document->add_text_as_heading
+    EXPORTING
+      text          = text             " Single Text, Up To 255 Characters Long
+*     sap_color     =                  " Not Release 99
+*     sap_fontstyle =                  " Not Release 99
+      heading_level = 1                " Valid: 1 to 6
+*     a11y_tooltip  =                  " A11Y: Additional Explanation
+*    CHANGING
+*     document      =                  " x
+    .
+  CALL METHOD document->new_line.
+
+  CALL METHOD document->new_line.
+
+  CALL METHOD document->new_line.
+
+*  line 1
+  text = 'user Name : '.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text         = text
+      sap_emphasis = 'strong'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 6.
+
+  text = sy-uname.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text      = text
+      sap_style = 'key'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 50.
+
+  text = 'date: '.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text         = text
+      sap_emphasis = 'strong'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 6.
+
+  text = sy-datum.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text      = text
+      sap_style = 'key'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 50.
+
+  text = 'time : '.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text         = text
+      sap_emphasis = 'strong'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 6.
+
+  text = sy-uzeit.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text = text
+*     sap_style = 'key'
+    .
+
+  CALL METHOD document->new_line.
+
+  CALL METHOD document->new_line.
+
+
+*  Line 2
+  text = 'user Name : '.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text         = text
+      sap_emphasis = 'strong'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 6.
+
+  text = sy-uname.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text      = text
+      sap_style = 'key'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 50.
+
+  text = 'date: '.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text         = text
+      sap_emphasis = 'strong'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 6.
+
+  text = sy-datum.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text      = text
+      sap_style = 'key'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 50.
+
+  text = 'time : '.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text         = text
+      sap_emphasis = 'strong'.
+
+  CALL METHOD document->add_gap
+    EXPORTING
+      width = 6.
+
+  text = sy-uzeit.
+
+  CALL METHOD document->add_text
+    EXPORTING
+      text = text
+*     sap_style = 'key'
+    .
+ENDFORM.
+*“html_top_of_page

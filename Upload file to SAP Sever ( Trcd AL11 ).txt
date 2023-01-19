@@ -20,8 +20,35 @@ START-OF-SELECTION.
   tbl_l_fields = w_l_struc->get_ddic_field_list( ).
 
 
-  w_l_filepath = 'C:\usr\sap\GVP\SYS\src\test.csv'.
+  w_l_filepath = 'test.csv'.
   SELECT * FROM sflight INTO CORRESPONDING FIELDS OF TABLE tbl_data.
+
+* Start: Covert Internal table to text
+  DATA: tbl_text(4096) TYPE c OCCURS 0.
+
+  CALL FUNCTION 'SAP_CONVERT_TO_TEX_FORMAT'
+    EXPORTING
+      i_field_seperator    = cl_rsda_csv_converter=>c_default_separator
+*     i_line_header        =
+*     i_filename           =
+*     i_appl_keep          = space
+*     i_step               = 5
+    TABLES
+      i_tab_sap_data       = tbl_data
+    CHANGING
+      i_tab_converted_data = tbl_text
+    EXCEPTIONS
+      conversion_failed    = 1
+      OTHERS               = 2.
+
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+      WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+* End Start: Covert Internal table to text
+
+
 
   DATA(lo_csv) = cl_rsda_csv_converter=>create(
                  i_delimiter      = cl_rsda_csv_converter=>c_default_delimiter
@@ -39,19 +66,21 @@ START-OF-SELECTION.
     ).
   ENDLOOP.
 
+  UNASSIGN: <fs_data>,
+            <fs_upload>.
+
 
 *  Mở đường dẫn trên Sever của SAP để lưu trữ file
   OPEN DATASET w_l_filepath FOR OUTPUT IN TEXT MODE ENCODING DEFAULT.
 
   LOOP AT tbl_l_fields ASSIGNING FIELD-SYMBOL(<fs_fields>).
-*    Dòng đầu tiên ghi tên miêu tả của fieldName
+
     IF w_l_ftext IS  INITIAL.
       CONCATENATE w_l_ftext <fs_fields>-fieldtext INTO w_l_ftext.
     ELSE.
       CONCATENATE w_l_ftext <fs_fields>-fieldtext INTO w_l_ftext SEPARATED BY cl_rsda_csv_converter=>c_default_separator.
     ENDIF.
 
-*    Dòng thứ hai ghi tên miêu tả của text fieldName
     IF w_l_fname IS  INITIAL.
       CONCATENATE w_l_fname <fs_fields>-fieldname INTO w_l_fname.
     ELSE.
@@ -72,5 +101,15 @@ START-OF-SELECTION.
 
   ENDLOOP.
 
+
+  LOOP AT tbl_text ASSIGNING FIELD-SYMBOL(<fs_text>).
+
+    TRANSFER <fs_text> TO w_l_filepath.
+
+  ENDLOOP.
+
 *  Đóng đường dẫn trên Sever của SAP để lưu trữ file
   CLOSE DATASET w_l_filepath.
+
+
+*  BREAK-POINT .

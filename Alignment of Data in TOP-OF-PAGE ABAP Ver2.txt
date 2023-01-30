@@ -1,10 +1,19 @@
 *&---------------------------------------------------------------------*
-*& Report YPG_ALIGHMENT_ALV
+*& Report YPG_QUYNHBC
 *&---------------------------------------------------------------------*
-*&
+*& Author: Quynh.BC
 *&---------------------------------------------------------------------*
-REPORT ypg_alighment_alv.
+* _______                    _                    ______   _______
+*(  ___  )|\     /||\     /|( (    /||\     /|   (  ___ \ (  ____ \
+*| (   ) || )   ( |( \   / )|  \  ( || )   ( |   | (   ) )| (    \/
+*| |   | || |   | | \ (_) / |   \ | || (___) |   | (__/ / | |
+*| |   | || |   | |  \   /  | (\ \) ||  ___  |   |  __ (  | |
+*| | /\| || |   | |   ) (   | | \   || (   ) |   | (  \ \ | |
+*| (_\ \ || (___) |   | |   | )  \  || )   ( | _ | )___) )| (____/\
+*(____\/_)(_______)   \_/   |/    )_)|/     \|(_)|/ \___/ (_______/
+*&---------------------------------------------------------------------*
 
+REPORT ypg_quynhbc.
 TABLES: sflight.
 DATA: lt TYPE TABLE OF sflight.
 
@@ -54,6 +63,14 @@ FORM top_page_section_control USING o_dd_document TYPE REF TO cl_dd_document.
   CALL METHOD o_dd_right->add_text
     EXPORTING
       text = 'This is right most line'.                     " Single Text, Up To 255 Characters Long.
+
+  CALL METHOD o_dd_right->add_picture
+    EXPORTING
+      picture_id = 'TRVPICTURE26'   " Object ID of Picture in BDS (TA OAOR)
+*     width      =                  " Not Release 99
+*     alternative_text =            " (Replacement) Text /Description of Graphic
+*     tabindex   =                  " A11Y: Set tabindex
+    .
 
 
 *  Alghn center.
